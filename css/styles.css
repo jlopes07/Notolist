@@ -84,6 +84,7 @@ select {
 
 .form-control input {
     margin-right: .5rem;
+    flex: 1;
 }
 
 #cancel-edit-btn {
