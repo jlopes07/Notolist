@@ -5,8 +5,13 @@ const todoList = document.querySelector("#todo-list");
 const editForm = document.querySelector("#edit-form");
 const editInput = document.querySelector("#edit-input");
 const cancelEditBtn = document.querySelector("#cancel-edit-btn");
+const searchInput = document.querySelector("#search-input");
+const eraseButton = document.querySelector("#erase-button");
+const filterSelect = document.querySelector("#filter-select");
+const searchForm = document.querySelector("#search-form");
 
 let oldInputValue;
+let currentFilter = 'all';
 
 //funções
 const saveTodo = (text) => {
@@ -54,7 +59,77 @@ const updateTodo = (text) => {
             todoTitle.innerText = text;
         }
     })
+    applyFilterAndSearch();
 }
+
+const searchTodos = (searchTerm) => {
+    const todos = document.querySelectorAll(".todo");
+    const searchTermLower = searchTerm.toLowerCase().trim();
+
+    todos.forEach((todo) => {
+        const todoTitle = todo.querySelector("h3").innerText.toLowerCase();
+        if (searchTerm === '' || todoTitle.includes(searchTermLower)) {
+            todo.style.display = "flex";
+        } else {
+            todo.style.display = "none";
+        }
+    });
+};
+
+const filterTodos = (filterType) => {
+    const todos = document.querySelectorAll(".todo");
+
+    todos.forEach((todo) => {
+        const isCompleted = todo.classList.contains("done");
+
+        switch (filterType) {
+            case "all":
+                todo.style.display = "flex";
+                break;
+            case "completed":
+                todo.style.display = isCompleted ? "flex" : "none";
+                break;
+            case "pending":
+                todo.style.display = !isCompleted ? "flex" : "none";
+                break;
+        }
+    });
+};
+
+const applyFilterAndSearch = () => {
+    const searchTerm = searchInput.value;
+    const filterType = filterSelect.value;
+
+    const todos = document.querySelectorAll(".todo");
+    todos.forEach((todo) => {
+        const isCompleted = todo.classList.contains("done");
+        let shouldShow = true;
+
+        switch (filterType) {
+            case "all":
+                shouldShow = true;
+                break;
+            case "completed":
+                shouldShow = isCompleted;
+                break;
+            case "pending":
+                shouldShow = !isCompleted;
+                break;
+        }
+
+        if (shouldShow && searchTerm) {
+            const todoTitle = todo.querySelector("h3").innerText.toLowerCase();
+            shouldShow = todoTitle.includes(searchTerm.toLowerCase().trim());
+        }
+
+        todo.style.display = shouldShow ? "flex" : "none";
+    });
+};
+
+const clearSearch = () => {
+    searchInput.value = '';
+    applyFilterAndSearch();
+};
 
 //eventos
 todoForm.addEventListener("submit", (e) => {
@@ -68,24 +143,24 @@ todoForm.addEventListener("submit", (e) => {
 
 document.addEventListener("click", (e) => {
     const targetEl = e.target;
-    const parentEl = targetEl.closest("div");
-    let todoTitle;
+    const parentEl = targetEl.closest(".todo");
 
-    if (parentEl && parentEl.querySelector("h3")) {
-        todoTitle = parentEl.querySelector("h3").innerText;
-    }
+    if (!parentEl) return;
 
-    if (targetEl.classList.contains("finish-todo")) {
+    const todoTitle = parentEl.querySelector("h3").innerText;
+
+    if (targetEl.classList.contains("finish-todo") || targetEl.closest(".finish-todo")) {
         parentEl.classList.toggle("done");
+        applyFilterAndSearch();
     }
 
-    if (targetEl.classList.contains("delete-todo")) {
+    if (targetEl.classList.contains("delete-todo") || targetEl.closest(".delete-todo")) {
         parentEl.remove();
+        applyFilterAndSearch();
     }
 
-    if (targetEl.classList.contains("edit-todo")) {
+    if (targetEl.classList.contains("edit-todo") || targetEl.closest(".edit-todo")) {
         toggleForms();
-
         editInput.value = todoTitle;
         oldInputValue = todoTitle;
     }
@@ -104,4 +179,18 @@ editForm.addEventListener("submit", (e) => {
     }
 
     toggleForms();
+});
+
+searchInput.addEventListener("input", (e) => {
+    applyFilterAndSearch();
+});
+
+eraseButton.addEventListener("click", (e) => {
+    e.preventDefault();
+    clearSearch();
+});
+
+filterSelect.addEventListener("change", (e) => {
+    currentFilter = e.target.value;
+    applyFilterAndSearch();
 });
